@@ -1,15 +1,15 @@
 using TiCev.Server.Settings;
+using TiCev.Server.Error;
 using TiCev.Server.Repositories;
 using TiCev.Server.Services;
 using Microsoft.Extensions.Options;
+using System.Security.Cryptography.X509Certificates;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 builder.Services.AddCors(action =>
 {
     action.AddPolicy("CORS", policy =>
@@ -17,15 +17,8 @@ builder.Services.AddCors(action =>
         policy.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin();
     });
 });
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 //mongoDB service injection
 
@@ -37,7 +30,9 @@ builder.Services.AddSingleton<IMongoDBSettings>(sp =>
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var settings = sp.GetRequiredService<IOptions<MongoDBSettings>>().Value;
-    return new MongoClient(settings.ConnectionString);
+    var clientSettings = MongoClientSettings.FromConnectionString(settings.ConnectionString);
+    clientSettings.ServerApi = new ServerApi(ServerApiVersion.V1);
+    return new MongoClient(clientSettings);
 });
 
 //services injections
@@ -47,7 +42,6 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
     var client = sp.GetRequiredService<IMongoClient>();
     var database = client.GetDatabase(settings.DatabaseName);
 
-    // Database initialization logic (e.g., creating indexes)
     InitializeDatabase(database, settings);
 
     return database;
@@ -62,6 +56,16 @@ builder.Services.AddSingleton<VideoRepo, VideoRepo>(sp =>
 
 builder.Services.AddScoped<VideoService, VideoService>();
 
+var app = builder.Build();
+
+app.UseMiddleware<DefaultErrorHandler>();
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseAuthorization();
 
 app.UseCors("CORS");
@@ -73,6 +77,7 @@ app.MapControllers();
 app.Run();
 
 
+// Database initialization logic (e.g., creating indexes)
 void InitializeDatabase(IMongoDatabase db, MongoDBSettings settings)
 {
 
