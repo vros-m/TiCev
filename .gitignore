@@ -13,6 +13,7 @@ dist-ssr
 *.local
 
 # Editor directories and files
+.vs/*
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -23,7 +24,7 @@ dist-ssr
 *.sln
 *.sw?
 
-
+**/bin/
 **/obj/
 client/public/vite.svg
 client/src/Graveyard.jsx
