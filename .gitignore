@@ -28,3 +28,4 @@ dist-ssr
 client/public/vite.svg
 client/src/Graveyard.jsx
 client/src/assets/react.svg
+**/bin/**
