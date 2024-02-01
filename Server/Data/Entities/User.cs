@@ -1,6 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-namespace TiCev.Server.Entities;
+namespace TiCev.Server.Data.Entities;
 public class User
 {
     [BsonId]

@@ -1,4 +1,4 @@
-namespace TiCev.Server.Entities;
+namespace TiCev.Server.Data.Entities;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
