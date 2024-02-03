@@ -1,27 +1,32 @@
 namespace TiCev.Server.Data.Entities;
 
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-public class Video
+public class Video :MongoEntity
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public ObjectId _id { get; set; }
-    [BsonElement("userId")]
     public string UserId { get; set; } = null!;
-    [BsonElement("title")]
     public string Title { get; set; } = null!;
-    [BsonElement("description")]
-    public string? Description { get; set; }
+    public string Description { get; set; } = "";
 
-    // public List<string>? Tags { get; set; }
+    //public List<string> Tags { get; set; } = [];
 
-    public long UploadDate { get; set; }
+    public long UploadDate { get; set; } = 0;
     public string? Thumbnail { get; set; }
-    [BsonElement("videoUrl")]
-    public string VideoURL { get; set; } = null!;
-    public int Views { get; set; }
-    public int Likes { get; set; }
-    public int Dislikes { get; set; }
+    public string VideoId { get; set; } = null!;
+    public int Views { get; set; } = 0;
+    public List<Tuple<string,double>> Ratings { get; set; } = [];
+
+    public string ChannelName { get; set; } = null!;
+}
+
+public class VideoDTO
+{
+    public string Title { get; set; } = null!;
+    public string UserId { get; set; } = null!;
+    public IFormFile File { get; set; } = null!;
+    public string Description { get; set; } = "";
+    public string ChannelName { get; set; } = null!;
+
 }

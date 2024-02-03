@@ -5,7 +5,7 @@ public class User
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public ObjectId _id { get; set; }
+    public ObjectId Id { get; set; }
 
     [BsonElement("username")]
     public string Username { get; set; } = null!;
