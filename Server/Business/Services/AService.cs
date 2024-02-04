@@ -21,6 +21,10 @@ public abstract class AService<T>(ARepo<T> repo)
         return item!;
     }
 
+    public virtual async Task<T> AddAsync(T document)
+    {
+        return await _repo.AddAsync(document);
+    }
     public async Task UpdateAsync(Expression<Func<T, bool>> filter, UpdateDefinition<T> update)
     {
         await _repo.UpdateAsync(filter, update);

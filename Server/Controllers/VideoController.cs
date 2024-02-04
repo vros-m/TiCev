@@ -27,7 +27,7 @@ public class VideoController(VideoService service) : ControllerBase
     [Produces("video/mp4")]
     public async Task<IActionResult> GetVideoContent([FromRoute] string id)
     {
-        var stream = await service.GetVideoAsync(id);
+        var stream = await _service.GetVideoAsync(id);
         return File(stream,"video/mp4");
     }
 
@@ -43,6 +43,19 @@ public class VideoController(VideoService service) : ControllerBase
     {
         await _service.DeleteVideoAsync(id);
         return Ok("Video deleted.");
+    }
+
+    [HttpGet("GetThumbnail/{id}")]
+    public async Task<IActionResult> GetThumbnail([FromRoute] string id)
+    {
+        var file = await _service.GetThumbnailAsync(id);
+        return File(file.Item1,file.Item2);
+    }
+
+    [HttpPut("IncrementViews")]
+    public async Task IncrementViews(string id)
+    {
+        await _service.IncrementViews(id);
     }
 
 }

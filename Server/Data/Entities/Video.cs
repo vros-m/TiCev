@@ -13,7 +13,7 @@ public class Video :MongoEntity
     //public List<string> Tags { get; set; } = [];
 
     public long UploadDate { get; set; } = 0;
-    public string? Thumbnail { get; set; }
+    public string ThumbnailId { get; set; } = "";
     public string VideoId { get; set; } = null!;
     public int Views { get; set; } = 0;
     public List<Tuple<string,double>> Ratings { get; set; } = [];
@@ -25,7 +25,7 @@ public class VideoDTO
 {
     public string Title { get; set; } = null!;
     public string UserId { get; set; } = null!;
-    public IFormFile File { get; set; } = null!;
+    public List<IFormFile> Files { get; set; } = null!;
     public string Description { get; set; } = "";
     public string ChannelName { get; set; } = null!;
 

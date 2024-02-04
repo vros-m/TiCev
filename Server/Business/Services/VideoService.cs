@@ -21,6 +21,17 @@ public class VideoService(VideoRepo repo):AService<Video>(repo)
         await _repo.DeleteVideoAsync(id);
     }
 
+    /// <summary>
+/// [deprecated]
+/// 
+/// Use UploadVideoAsync
+/// </summary>
+/// <param name="document"></param>
+/// <returns></returns>
+    public override Task<Video> AddAsync(Video document)
+    {
+        return base.AddAsync(document);
+    }
     public async Task UpdateDescription(string videoId,string newDesc)
     {
         var update = Builders<Video>.Update.Set(v => v.Description, newDesc);
@@ -42,5 +53,15 @@ public class VideoService(VideoRepo repo):AService<Video>(repo)
     public async Task<GridFSDownloadStream> GetVideoAsync(string id)
     {
         return await _repo.GetVideoAsync(id);
+    }
+
+    public async Task<Tuple<byte[],string>> GetThumbnailAsync(string id)
+    {
+        return await _repo.GetThumbnailAsync(id);
+    }
+
+    public async Task IncrementViews(string id)
+    {
+        await _repo.IncrementViews(id);
     }
 }

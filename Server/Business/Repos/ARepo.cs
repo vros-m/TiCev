@@ -23,7 +23,7 @@ public abstract class ARepo<T>(IMongoClient client,string collectionName)
         return (await _collection.FindAsync(filter)).FirstOrDefault();
     } 
 
-    public async Task<T> AddAsync(T document)
+    public virtual async Task<T> AddAsync(T document)
     {
         await _collection.InsertOneAsync(document);
         return document;
