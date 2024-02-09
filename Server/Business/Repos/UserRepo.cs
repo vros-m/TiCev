@@ -21,7 +21,7 @@ public class UserRepo(IMongoClient client):ARepo<User>(client,"users")
                 new BsonDocument
                 {
                     { "from", "videos" },      // The name of the videos collection
-                    { "localField", "user.VideoIds" },  // The field from the input documents (user.VideoIds)
+                    { "localField", "VideoIds" },  // The field from the input documents (user.VideoIds)
                     { "foreignField", "_id" },          // The field from the documents of the "from" collection (videos)
                     { "as", "Videos" }                  // The name of the new array field to add
                 }
@@ -34,11 +34,11 @@ public class UserRepo(IMongoClient client):ARepo<User>(client,"users")
         return DTOManager.FromDTOToUserView(res,currentUserId);
     }
 
-    public async Task<List<Video>> GetPlaylistContent(string ownerId,string id)
+    public async Task<List<Video>> GetPlaylistContent(string id)
     {
 
          var pipeline = new BsonDocument[]{
-            new BsonDocument("$match", new BsonDocument("_id", new BsonObjectId(new ObjectId(ownerId)))),
+            new BsonDocument("$match", new BsonDocument("Playlists._id", new BsonObjectId(new ObjectId(id)))),
             new BsonDocument("$unwind", "$Playlists"),
             new BsonDocument("$match", new BsonDocument("Playlists._id", new BsonObjectId(new ObjectId(id)))),
             new BsonDocument("$unwind", "$Playlists.VideoIds"),

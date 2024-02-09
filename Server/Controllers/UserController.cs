@@ -77,29 +77,29 @@ public class UserController(UserService service):ControllerBase
         return Ok(id);
     }
 
-    [HttpDelete("DeletePlaylist/{ownerId}/{id}")]
-    public async Task<IActionResult> DeletePlaylist(string ownerId,string id)
+    [HttpDelete("DeletePlaylist/{id}")]
+    public async Task<IActionResult> DeletePlaylist(string id)
     {
-        await _service.DeletePlaylist(ownerId, id);
+        await _service.DeletePlaylist( id);
         return Ok();
     }
 
-    [HttpGet("GetPlaylistContent/{ownerId}/{id}")]
-    public async Task<IActionResult> GetPlaylistContent(string ownerId,string id)
+    [HttpGet("GetPlaylistContent/{id}")]
+    public async Task<IActionResult> GetPlaylistContent(string id)
     {
-        return Ok(await _service.GetPlaylistContent(ownerId, id));
+        return Ok(await _service.GetPlaylistContent(id));
     }
 
-    [HttpPost("AddVideoToPlaylist/{ownerId}/{playlistId}/{videoId}")]
-    public async Task<IActionResult> AddVideoToPlaylist(string ownerId,string playlistId,string videoId)
+    [HttpPost("AddVideoToPlaylist/{playlistId}/{videoId}")]
+    public async Task<IActionResult> AddVideoToPlaylist(string playlistId,string videoId)
     {
-        await _service.AddVideoToPlaylist(ownerId, playlistId, videoId);
+        await _service.AddVideoToPlaylist( playlistId, videoId);
         return Ok();
     }
-    [HttpDelete("RemoveVideoFromPlaylist/{ownerId}/{playlistId}/{videoId}")]
-    public async Task<IActionResult> RemoveVideoFromPlaylist(string ownerId,string playlistId,string videoId)
+    [HttpDelete("RemoveVideoFromPlaylist/{playlistId}/{videoId}")]
+    public async Task<IActionResult> RemoveVideoFromPlaylist(string playlistId,string videoId)
     {
-        await _service.RemoveVideoFromPlaylist(ownerId, playlistId, videoId);
+        await _service.RemoveVideoFromPlaylist(playlistId, videoId);
         return Ok();
     }
 }

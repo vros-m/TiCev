@@ -102,6 +102,6 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
 
     public async Task<List<Video>> SearchForVideosAsync(string query)
     {
-        return (await _collection.FindAsync(Builders<Video>.Filter.Text(query, "English"))).ToList();
+        return (await _collection.FindAsync(Builders<Video>.Filter.Regex("Title", query))).ToList();
     }
 }

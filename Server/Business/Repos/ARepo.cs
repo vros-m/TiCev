@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using TiCev.Server.Data.Entities;
 
 namespace TiCev.Server.Business.Repos;
 
@@ -89,6 +90,23 @@ public abstract class ARepo<T>(IMongoClient client,string collectionName)
         await UpdateOneAsync(filter, update);
     }
 
+        /// <summary>
+    /// Method for removing objects from arrays (use the overloaded version for strings)
+    /// </summary>
+    /// <typeparam name="TItem"></typeparam>
+    /// <param name="filter"></param>
+    /// <param name="listProperty"></param>
+    /// <param name="condition"></param>
+    /// <returns></returns>
+    public virtual async Task RemoveFromListAsync<TItem>(
+        FilterDefinition<T> filter,
+        Expression<Func<T, IEnumerable<TItem>>> listProperty,
+        Expression<Func<TItem, bool>> condition) where TItem:class
+    {
+        var update = Builders<T>.Update.PullFilter(listProperty, Builders<TItem>.Filter.Where(condition));
+
+        await UpdateOneAsync(filter, update);
+    }
     public virtual async Task RemoveFromListAsync<TItem>(Expression<Func<T, bool>> filter,
     Expression<Func<T, IEnumerable<TItem>>> listProperty,TItem value)
     {

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -65,33 +66,28 @@ public class UserService(UserRepo repo,VideoRepo videoRepo):AService<User>(repo)
         return playlist.ObjectId;
     }
 
-    public async Task DeletePlaylist(string ownerId,string id)
+    public async Task DeletePlaylist(string id)
     {
-        await _repo.RemoveFromListAsync(u => u.Id.ToString() == ownerId, u => u.Playlists, p => p.Id == ObjectId.Parse(id));
+        await _repo.RemoveFromListAsync(Builders<User>.Filter.ElemMatch(u=>
+        u.Playlists,p=>p.Id==ObjectId.Parse(id)), u => u.Playlists, p => p.Id == ObjectId.Parse(id));
     }
 
-    public async Task<List<VideoCardView>> GetPlaylistContent(string ownerId,string id)
+    public async Task<List<VideoCardView>> GetPlaylistContent(string id)
     {
-        var list =await _repo.GetPlaylistContent(ownerId, id);
+        var list =await _repo.GetPlaylistContent(id);
         return list.Select(DTOManager.FromVideoToCardView).ToList();
     }
 
-    public async Task AddVideoToPlaylist(string ownerId,string playlistId,string videoId)
+    public async Task AddVideoToPlaylist(string playlistId,string videoId)
     {
-        var filter = Builders<User>.Filter.And(
-        Builders<User>.Filter.Eq("_id", ObjectId.Parse(ownerId)),
-        Builders<User>.Filter.Eq("Playlists._id", ObjectId.Parse(playlistId))
-            );
+        var filter = Builders<User>.Filter.Eq("Playlists._id", ObjectId.Parse(playlistId));
 
         var update = Builders<User>.Update.Push("Playlists.$.VideoIds", videoId);
         await UpdateOneAsync(filter, update);
     }
-    public async Task RemoveVideoFromPlaylist(string ownerId,string playlistId,string videoId)
+    public async Task RemoveVideoFromPlaylist(string playlistId,string videoId)
     {
-        var filter = Builders<User>.Filter.And(
-        Builders<User>.Filter.Eq("_id", ObjectId.Parse(ownerId)),
-        Builders<User>.Filter.Eq("Playlists._id", new ObjectId(playlistId))
-            );
+        var filter = Builders<User>.Filter.Eq("Playlists._id", new ObjectId(playlistId));
 
         var update = Builders<User>.Update.Pull("Playlists.$.VideoIds", videoId);
         await UpdateOneAsync(filter, update);

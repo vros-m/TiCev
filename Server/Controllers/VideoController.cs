@@ -83,7 +83,6 @@ public class VideoController(VideoService service) : ControllerBase
     /*HTTPGET RECOMMENDED VIDEOS*/
     /*HTTPGET FRONT PAGE*/
     /*ADD SUPPORT FOR TAGS*/
-    // FIX SEARCH
     // CHECK HOW DELETE WORKS (MAKE IT REMOVE ITEMS FROM PLAYLISTS)
 
 }

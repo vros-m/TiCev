@@ -25,8 +25,9 @@ public class VideoService(VideoRepo repo,UserRepo userRepo):AService<Video>(repo
     public async Task DeleteVideoAsync(string id)
     {
         var vid =await _repo.DeleteVideoAsync(id);
-        await _userRepo.RemoveFromListAsync(u => u.Id == ObjectId.Parse(vid.ChannelId), u => u.VideoIds,
-        v =>v ==id);
+        await _userRepo.RemoveFromListAsync(u => u.Id == ObjectId.Parse(vid.ChannelId), u => u.VideoIds,id);
+        await _userRepo.UpdateManyAsync(Builders<User>.Filter.ElemMatch<Playlist>(
+            u => u.Playlists, p => p.VideoIds.Contains(id)), Builders<User>.Update.Pull("Playlists.$.VideoIds", id));
     }
 
     public async Task<VideoView> GetVideoViewAsync(string videoId,string userId)
