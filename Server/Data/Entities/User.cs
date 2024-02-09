@@ -1,35 +1,27 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+
 namespace TiCev.Server.Data.Entities;
-public class User
+public class User :MongoEntity
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public ObjectId Id { get; set; }
-
-    [BsonElement("username")]
     public string Username { get; set; } = null!;
-    [BsonElement("passwordHash")]
     public string PasswordHash { get; set; } = null!;
-    [BsonElement("email")]
     public string Email { get; set; } = null!;
-
-    // public string FirstName { get; set; } = String.Empty;
-    // public string LastName { get; set; } = String.Empty;
-    // public string? ProfilePicture { get; set; }
-
-    [BsonElement("videosCreated")]
-    public List<string>? CreatedVideoIds { get; set; }
-    [BsonElement("videosLiked")]
-    public List<string>? LikedVideoIds { get; set; }
-
-    //mozda da ima mogucnost da subscribeuje na kanale    
-    public List<string>? SubscriptionsIds { get; set; }
-
-    public User()
-    {
-        CreatedVideoIds = new List<string>();
-        LikedVideoIds = new List<string>();
-        SubscriptionsIds = new List<string>();
-    }
+    public string Bio { get; set; } = "";
+    public string ProfilePicture { get; set; } = "";
+    public DateTime Birthday { get; set; }
+    public string Gender { get; set; } = null!;
+    [BsonRepresentation(BsonType.ObjectId)]
+    public List<string> VideoIds  { get; set; } = [];
+    public List<Subscription> Subscriptions { get; set; } = [];
+    public List<string> Subscribers { get; set; } = [];
+    public List<Playlist> Playlists { get; set; } = [];
 }
+
+public record class SimpleUser(string Id,string Username);
+public record class UserViewDTO(string Username,string Email,string Bio,DateTime Birthday,string Gender,List<Video> Videos,
+List<Subscription> Subscriptions,List<string> Subscribers, List<Playlist> Playlists,ObjectId Id);
+
+public record class UserView(string Username,string Email,string Bio,DateTime Birthday,string Gender,List<VideoCardView> Videos,
+List<Subscription> Subscriptions, List<Playlist> Playlists,string Id,bool IsSubscribed);
+

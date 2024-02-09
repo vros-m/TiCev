@@ -1,20 +1,12 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 namespace TiCev.Server.Data.Entities;
-public class Comment
+public class Comment:MongoEntity
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public ObjectId _id { get; set; }
-    [BsonElement("videoId")]
-    public string VideoId { get; set; } = null!;
-    [BsonElement("postedByUser")]
+
+    public long Timestamp{ get; set; }
     public string UserId { get; set; } = null!;
-    [BsonElement("text")]
+    public string Username { get; set; } = null!;
     public string Text { get; set; } = null!;
-    public long Date { get; set; }
-    public int Likes { get; set; }
-    public int Dislikes { get; set; }
-    [BsonElement("replies")]
-    public List<string>? ReplyCommentIds { get; set; }
+    public List<string> LikeIds { get; set; } = [];
 }

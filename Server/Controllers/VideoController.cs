@@ -10,10 +10,10 @@ public class VideoController(VideoService service) : ControllerBase
 {
     private readonly VideoService _service = service;
 
-    [HttpGet("GetVideo/{videoId}")]
-    public async Task<ActionResult> GetVideo([FromRoute] string videoId)
+    [HttpGet("GetVideo/{videoId}/{userId}")]
+    public async Task<ActionResult> GetVideo([FromRoute] string videoId,[FromRoute]string userId)
     {
-        return Ok(await _service.GetByIdAsync(videoId));
+        return Ok(await _service.GetVideoViewAsync(videoId,userId));
     }
 
     [HttpPost("PostVideo")]
@@ -52,10 +52,38 @@ public class VideoController(VideoService service) : ControllerBase
         return File(file.Item1,file.Item2);
     }
 
+    [HttpGet("GetThumbnailByVideoId/{id}")]
+    public async Task<IActionResult> GetThumbnailByVideoId([FromRoute] string id)
+    {
+        var vid = await _service.GetByIdAsync(id);
+        var file = await _service.GetThumbnailAsync(vid.ThumbnailId);
+        return File(file.Item1, file.Item2);
+    }
+
     [HttpPut("IncrementViews")]
-    public async Task IncrementViews(string id)
+    public async Task<IActionResult> IncrementViews(string id)
     {
         await _service.IncrementViews(id);
+        return Ok();
     }
+
+    [HttpPut("RateVideo/{videoId}/{userId}/{rating}")]
+    public async Task<IActionResult> RateVideo(string videoId,string userId,double rating)
+    {
+       await _service.RateVideo(videoId, userId, rating);
+        return Ok();
+    }
+
+    [HttpGet("SearchForVideo/{query}")]
+    public async Task<IActionResult> SearchForVideo(string query)
+    {
+        return Ok(await _service.SearchForVideosAsync(query));
+    }
+
+    /*HTTPGET RECOMMENDED VIDEOS*/
+    /*HTTPGET FRONT PAGE*/
+    /*ADD SUPPORT FOR TAGS*/
+    // FIX SEARCH
+    // CHECK HOW DELETE WORKS (MAKE IT REMOVE ITEMS FROM PLAYLISTS)
 
 }

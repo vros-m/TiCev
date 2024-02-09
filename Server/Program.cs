@@ -4,6 +4,10 @@ using TiCev.Server.Business.Services;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using TiCev.Server.Business.Repos;
+using MongoDB.Bson;
+using TiCev.Server.Data.Entities;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,8 +40,25 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 
 builder.Services.AddScoped<VideoRepo, VideoRepo>();
 builder.Services.AddScoped<VideoService, VideoService>();
+builder.Services.AddScoped<UserRepo,UserRepo>();
+builder.Services.AddScoped<UserService, UserService>();
 
 var app = builder.Build();
+
+var mongoDatabase = app.Services.GetService<IMongoClient>()!.GetDatabase(Constants.ConstObj.DatabaseName);
+var usersCollection = mongoDatabase.GetCollection<BsonDocument>("users");
+var usernameIndexModel = new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Text("Username"),
+            new CreateIndexOptions { Unique = true }
+        );
+usersCollection.Indexes.CreateOne(usernameIndexModel);
+
+
+var videosCollection = mongoDatabase.GetCollection<Video>("videos");
+videosCollection.Indexes.CreateMany([new CreateIndexModel<Video>(
+    Builders<Video>.IndexKeys.Text(v => v.Title)),
+new CreateIndexModel<Video>(Builders<Video>.IndexKeys.Ascending(v=>v.Tags))
+]);
 
 app.UseMiddleware<DefaultErrorHandler>();
 // Configure the HTTP request pipeline.

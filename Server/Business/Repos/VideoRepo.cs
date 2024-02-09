@@ -1,5 +1,6 @@
 
 using System.Buffers.Text;
+using System.Linq.Expressions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
@@ -10,7 +11,6 @@ namespace TiCev.Server.Business.Repos;
 public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
 {
     private readonly GridFSBucket _bucket = new(client.GetDatabase(Constants.ConstObj.DatabaseName));
-
 
     public async Task<Video> UploadVideoAsync(VideoDTO dto)
     {
@@ -34,18 +34,30 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
         return await AddAsync(video);
     }
 
-    public async Task DeleteVideoAsync(string id)
+    public async Task<Video> DeleteVideoAsync(string id)
     {
         var objectId = ObjectId.Parse(id);
 
         var video = (await GetByIdAsync(id))!;
         var task =  _bucket.DeleteAsync(ObjectId.Parse(video.VideoId));
-        var task2 = DeleteAsync(video=>video.Id==objectId);
+        var task2 = base.DeleteAsync(video=>video.Id==objectId);
         var task3 = video.ThumbnailId!=""?_bucket.DeleteAsync(ObjectId.Parse(video.ThumbnailId)):null;
         await task;
         await task2;
         if (task3 != null)
             await task3;
+        return video;
+    }
+
+/// <summary>
+/// [deprecated]
+/// </summary>
+/// <param name="filter"></param>
+/// <returns></returns>
+/// <exception cref="NotImplementedException"></exception>
+    public override Task DeleteAsync(Expression<Func<Video, bool>> filter)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<GridFSDownloadStream> GetVideoAsync(string id)
@@ -63,9 +75,33 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
         return Tuple.Create(bytes, mimeType!);
     }
 
-    public async Task IncrementViews(string id)
+    public async Task<Video> IncrementViews(string id)
     {
-        await _collection.FindOneAndUpdateAsync(v => v.Id == ObjectId.Parse(id), Builders<Video>.Update.Inc(v => v.Views,1));
+        return await _collection.FindOneAndUpdateAsync(v => v.Id == ObjectId.Parse(id), Builders<Video>.Update.Inc(v => v.Views,1));
     }
 
+    public async Task UpdateRatingAsync(string videoId)
+    {
+        var id = ObjectId.Parse(videoId);
+        var pipeline = new List<IPipelineStageDefinition>
+        {
+            PipelineStageDefinitionBuilder.Match<Video>(v=>v.Id==id),
+            PipelineStageDefinitionBuilder.Unwind<Video>("Ratings"),
+            PipelineStageDefinitionBuilder.Group<BsonDocument>(
+                new BsonDocument{
+                    {"_id", BsonNull.Value},
+                    {"Rating",
+                    new BsonDocument("$avg",new BsonDocument("$arrayElemAt",new BsonArray{"$Ratings",1}))}
+                    })
+        };
+
+        var result = await _collection.AggregateAsync<BsonDocument>(pipeline);
+        await UpdateOneAsync(v => v.Id == id, Builders<Video>.Update.Set("Rating", result.First().GetValue("rating")));
+        
+    }
+
+    public async Task<List<Video>> SearchForVideosAsync(string query)
+    {
+        return (await _collection.FindAsync(Builders<Video>.Filter.Text(query, "English"))).ToList();
+    }
 }
