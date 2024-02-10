@@ -20,9 +20,9 @@ public abstract class AService<T>(ARepo<T> repo)
     {
         return await _repo.GetAllByFieldAsync(filter);
     }
-    public virtual async Task<List<T>> GetAllAsync()
+    public virtual async Task<List<T>> GetAllAsync(int skip=0,int limit=0x7FFFFFFF)
     {
-        return await _repo.GetAllAsync();
+        return await _repo.GetAllAsync(skip,limit);
     }
 
     public virtual async Task<T> GetByIdAsync(string id)

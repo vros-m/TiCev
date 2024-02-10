@@ -10,15 +10,20 @@ using TiCev.Server.Error;
 
 namespace TiCev.Server.Business.Services;
 
-public class VideoService(VideoRepo repo,UserRepo userRepo):AService<Video>(repo)
+public class VideoService(VideoRepo repo,UserRepo userRepo,TagRepo tagRepo):AService<Video>(repo)
 {
     private new readonly VideoRepo _repo = repo;
     private readonly UserRepo _userRepo = userRepo;
+
+    private readonly TagRepo _tagRepo = tagRepo;
     public async Task<Video> UploadVideoAsync(VideoDTO dto)
     {
         var vid =await _repo.UploadVideoAsync(dto);
         await _userRepo.InsertIntoListAsync(u => u.Id == ObjectId.Parse(vid.ChannelId), u => u.VideoIds,
         vid.Id.ToString());
+        var tags =Data.Entities.Tag.ExtractTags(vid);
+        if(tags.Count!=0)
+            await _tagRepo.AddManyAsync(tags);
         return vid;
     }
 
@@ -26,8 +31,9 @@ public class VideoService(VideoRepo repo,UserRepo userRepo):AService<Video>(repo
     {
         var vid =await _repo.DeleteVideoAsync(id);
         await _userRepo.RemoveFromListAsync(u => u.Id == ObjectId.Parse(vid.ChannelId), u => u.VideoIds,id);
-        await _userRepo.UpdateManyAsync(Builders<User>.Filter.ElemMatch<Playlist>(
+        await _userRepo.UpdateManyAsync(Builders<User>.Filter.ElemMatch(
             u => u.Playlists, p => p.VideoIds.Contains(id)), Builders<User>.Update.Pull("Playlists.$.VideoIds", id));
+        await _tagRepo.DeleteManyAsync(t=>t.VideoId==id);
     }
 
     public async Task<VideoView> GetVideoViewAsync(string videoId,string userId)
@@ -90,5 +96,10 @@ public class VideoService(VideoRepo repo,UserRepo userRepo):AService<Video>(repo
     {
         var videos = await _repo.SearchForVideosAsync(query);
         return videos.Select(DTOManager.FromVideoToCardView).ToList();
+    }
+
+    public async Task<List<VideoCardView>> GetRecommendedVideosAsync(string id)
+    {
+        return (await _repo.GetRecommendedVideosAsync(id)).Select(DTOManager.FromVideoToCardView).ToList();
     }
 }

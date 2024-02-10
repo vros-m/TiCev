@@ -6,5 +6,14 @@ public class Tag :MongoEntity
     public string TagName { get; set; } = null!;
 
     [BsonRepresentation(BsonType.ObjectId)]
-    public List<string> AssociatedVideoIds { get; set; }=[];
+    public string VideoId { get; set; } = null!;
+
+    public static List<Tag> ExtractTags(Video video)
+    {
+        return video.Tags.Select(tag => new Tag
+        {
+            TagName=tag,
+            VideoId=video.ObjectId
+        }).ToList();
+    }
 }

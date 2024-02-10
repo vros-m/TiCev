@@ -104,4 +104,34 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
     {
         return (await _collection.FindAsync(Builders<Video>.Filter.Regex("Title", query))).ToList();
     }
+
+    public async Task<List<Video>> GetRecommendedVideosAsync(string id)
+    {
+        BsonDocument[] pipeline = [
+            new("$match",new BsonDocument("_id",ObjectId.Parse(id))),
+            new("$lookup",new BsonDocument{
+                { "from", "tags" },
+                { "localField", "Tags" },
+                { "foreignField", "TagName" },
+                { "as", "JoinedTags" }
+            }),
+            new("$unwind","$JoinedTags"),
+            new("$replaceRoot",new BsonDocument("newRoot","$JoinedTags")),
+            new("$group",new BsonDocument{
+                {"_id","$VideoId"},
+                {"Tags",new BsonDocument("$addToSet","TagName")},
+                {"TagCount",new BsonDocument("$sum",1)}
+            }),
+            new("$match",new BsonDocument("_id",new BsonDocument("$not",new BsonDocument("$eq",ObjectId.Parse(id))))),
+            new("$lookup",new BsonDocument{
+                {"from","videos"},
+                { "localField", "_id"},
+                {"foreignField", "_id"},
+                {"as", "Videos"}
+            }),new("$unwind","$Videos"),
+            new("$sort",new BsonDocument("TagCount",-1)),
+            new("$replaceRoot",new BsonDocument("newRoot","$Videos"))
+        ];
+        return (await _collection.AggregateAsync<Video>(pipeline)).ToList();
+    }
 }

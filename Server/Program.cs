@@ -22,18 +22,11 @@ builder.Services.AddCors(action =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//mongoDB service injection
 
-/* builder.Services.Configure<MongoDBSettings>(
-    builder.Configuration.GetSection("MongoDBSettings"));
-builder.Services.AddSingleton<IMongoDBSettings>(sp =>
-    sp.GetRequiredService<IOptions<MongoDBSettings>>().Value); */
 
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
-    /*  var settings = sp.GetRequiredService<IOptions<MongoDBSettings>>().Value;
-     var clientSettings = MongoClientSettings.FromConnectionString(settings.ConnectionString);
-     clientSettings.ServerApi = new ServerApi(ServerApiVersion.V1); */
+
     string ConnectionString = "mongodb://localhost:27017";
     return new MongoClient(ConnectionString);
 });
@@ -42,6 +35,8 @@ builder.Services.AddScoped<VideoRepo, VideoRepo>();
 builder.Services.AddScoped<VideoService, VideoService>();
 builder.Services.AddScoped<UserRepo,UserRepo>();
 builder.Services.AddScoped<UserService, UserService>();
+builder.Services.AddScoped<TagRepo, TagRepo>();
+builder.Services.AddScoped<TagService, TagService>();
 
 var app = builder.Build();
 
@@ -60,6 +55,10 @@ videosCollection.Indexes.CreateMany([new CreateIndexModel<Video>(
 new CreateIndexModel<Video>(Builders<Video>.IndexKeys.Ascending(v=>v.Tags))
 ]);
 
+var tagCollection = mongoDatabase.GetCollection<TiCev.Server.Data.Entities.Tag>("tags");
+tagCollection.Indexes.CreateMany([new CreateIndexModel<TiCev.Server.Data.Entities.Tag>(
+    Builders<TiCev.Server.Data.Entities.Tag>.IndexKeys.Text(t=>t.TagName)
+)]);
 app.UseMiddleware<DefaultErrorHandler>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

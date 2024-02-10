@@ -92,4 +92,9 @@ public class UserService(UserRepo repo,VideoRepo videoRepo):AService<User>(repo)
         var update = Builders<User>.Update.Pull("Playlists.$.VideoIds", videoId);
         await UpdateOneAsync(filter, update);
     }
+
+    public async Task<List<VideoCardView>> GetSubscriptionVideos(string id,int skip)
+    {
+        return (await _repo.GetSubscriptionVideos(id, skip)).Select(DTOManager.FromVideoToCardView).ToList();
+    }
 }

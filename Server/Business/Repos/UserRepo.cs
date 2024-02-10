@@ -59,5 +59,28 @@ public class UserRepo(IMongoClient client):ARepo<User>(client,"users")
 
         return (await _collection.AggregateAsync<Video>(pipeline)).ToList();
     }
-    
+    public async Task<List<Video>> GetSubscriptionVideos(string id,int skip)
+    {
+        const int limit = 20;
+        BsonDocument[] pipeline = [
+            new("$match",new BsonDocument("_id",ObjectId.Parse(id))),new("$lookup",new BsonDocument
+            {
+                { "from", "users" },
+                { "localField", "Subscriptions.ChannelId" },
+                { "foreignField", "_id" },
+                { "as", "Channels" }
+            }),
+            new("$lookup",new BsonDocument{
+                { "from", "videos" },
+                { "localField", "Channels.VideoIds" },
+                { "foreignField", "_id" },
+                { "as", "Feed" }
+            }),new("$unwind","$Feed"),new("$replaceRoot",new BsonDocument("newRoot","$Feed")),
+            new("$sort",new BsonDocument("_id",-1)),new("$skip",limit*skip),new("$limit",limit)
+            
+        ];
+
+        var result = (await _collection.AggregateAsync<Video>(pipeline)).ToList();
+        return result;
+    }
 }

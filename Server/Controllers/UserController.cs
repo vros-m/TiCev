@@ -102,4 +102,10 @@ public class UserController(UserService service):ControllerBase
         await _service.RemoveVideoFromPlaylist(playlistId, videoId);
         return Ok();
     }
+
+        [HttpGet("GetFeed/{id}")]
+    public async Task<IActionResult> GetFeed(string id,int skip=0)
+    {
+        return Ok(await _service.GetSubscriptionVideos(id, skip));
+    }
 }

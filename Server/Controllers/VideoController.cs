@@ -80,9 +80,18 @@ public class VideoController(VideoService service) : ControllerBase
         return Ok(await _service.SearchForVideosAsync(query));
     }
 
-    /*HTTPGET RECOMMENDED VIDEOS*/
-    /*HTTPGET FRONT PAGE*/
-    /*ADD SUPPORT FOR TAGS*/
-    // CHECK HOW DELETE WORKS (MAKE IT REMOVE ITEMS FROM PLAYLISTS)
+    [HttpGet("GetVideos")]
+    public async Task<IActionResult> GetVideos(int skip=0,int limit=20)
+    {
+        return Ok(await _service.GetAllAsync(skip,limit));
+    }
+
+    [HttpGet("GetRecommendedVideos/{id}")]
+    public async Task<IActionResult> GetRecommendedVideos(string id)
+    {
+        return Ok(await _service.GetRecommendedVideosAsync(id));
+    }
+
+    //add comments and notifications
 
 }

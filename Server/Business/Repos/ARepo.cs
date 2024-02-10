@@ -12,9 +12,9 @@ public abstract class ARepo<T>(IMongoClient client,string collectionName)
     protected IMongoCollection<T> _collection
     =client.GetDatabase(Constants.ConstObj.DatabaseName).GetCollection<T>(collectionName);
 
-    public virtual async Task<List<T>> GetAllAsync()
+    public virtual async Task<List<T>> GetAllAsync(int skip=0,int limit=0x7FFFFFFF)
     {
-        return await _collection.Find(item => true).ToListAsync();
+        return await _collection.Find(item => true).Skip(skip).Limit(limit).ToListAsync();
     }
 
     public virtual async Task<T?> GetByIdAsync(string id)
@@ -28,6 +28,12 @@ public abstract class ARepo<T>(IMongoClient client,string collectionName)
     {
         await _collection.InsertOneAsync(document);
         return document;
+    }
+
+    public virtual async Task<IEnumerable<T>> AddManyAsync(IEnumerable<T> documents)
+    {
+        await _collection.InsertManyAsync(documents);
+        return documents;
     }
 
     public virtual async Task UpdateOneAsync(Expression<Func<T, bool>> filter, UpdateDefinition<T> update)
@@ -52,6 +58,10 @@ public abstract class ARepo<T>(IMongoClient client,string collectionName)
     public virtual async Task DeleteAsync(Expression<Func<T, bool>> filter)
     {
         await _collection.DeleteOneAsync(filter);
+    }
+    public virtual async Task DeleteManyAsync(Expression<Func<T, bool>> filter)
+    {
+        await _collection.DeleteManyAsync(filter);
     }
 
     public virtual async Task<TField> GetFieldAsync<TField>(Expression<Func<T, bool>> filter, Expression<Func<T, TField>> field)
