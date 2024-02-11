@@ -16,6 +16,11 @@ public abstract class AService<T>(ARepo<T> repo)
         return await _repo.GetFirstByFieldAsync(filter);
     }
 
+    public virtual async Task<T?> GetFirstByFieldAsync(FilterDefinition<T> filter)
+    {
+        return await _repo.GetFirstByFieldAsync(filter);
+    }
+
      public virtual async Task<List<T>> GetAllByFieldAsync(Expression<Func<T,bool>> filter)
     {
         return await _repo.GetAllByFieldAsync(filter);

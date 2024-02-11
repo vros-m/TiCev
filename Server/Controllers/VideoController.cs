@@ -92,6 +92,25 @@ public class VideoController(VideoService service) : ControllerBase
         return Ok(await _service.GetRecommendedVideosAsync(id));
     }
 
-    //add comments and notifications
+    [HttpPost("AddComment")]
+    public async Task<IActionResult> AddComment(Comment comment)
+    {
+        await _service.AddComment(comment);
+        return Ok();
+    }
+
+    [HttpDelete("DeleteComment")]
+    public async Task<IActionResult> DeleteComment(string id)
+    {
+        await _service.DeleteComment(id);
+        return Ok();
+    }
+
+    [HttpPut("LikeComment/{userId}/{commentId}/{direction}")]
+    public async Task<IActionResult> LikeComment(string userId,string commentId, bool direction)
+    {
+        await _service.LikeComment(userId,commentId,direction);
+        return Ok();
+    }
 
 }

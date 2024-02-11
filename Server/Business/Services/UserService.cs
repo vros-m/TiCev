@@ -9,11 +9,12 @@ using TiCev.Server.Error;
 
 namespace TiCev.Server.Business.Services;
 
-public class UserService(UserRepo repo,VideoRepo videoRepo):AService<User>(repo)
+public class UserService(UserRepo repo,VideoRepo videoRepo,SocketService socketService):AService<User>(repo)
 {
     private PasswordHasher<User> _hasher = new();
     private new readonly UserRepo _repo = repo;
     private readonly VideoRepo _videoRepo = videoRepo;
+    private readonly SocketService _socketService = socketService;
     public override Task<User> AddAsync(User document)
     {
         document.PasswordHash = _hasher.HashPassword(document, document.PasswordHash);
@@ -24,7 +25,7 @@ public class UserService(UserRepo repo,VideoRepo videoRepo):AService<User>(repo)
     {
         var user = await _repo.GetByUsernameAsync(username);
         return _hasher.VerifyHashedPassword(user!, user!.PasswordHash, password)==PasswordVerificationResult.Failed?null:
-        DTOManager.SimplifyUser(user);
+        DTOManager.SimplifyUser(user!);
     }
 
     public async Task ChangePfp(string id,string newPfp)
@@ -96,5 +97,18 @@ public class UserService(UserRepo repo,VideoRepo videoRepo):AService<User>(repo)
     public async Task<List<VideoCardView>> GetSubscriptionVideos(string id,int skip)
     {
         return (await _repo.GetSubscriptionVideos(id, skip)).Select(DTOManager.FromVideoToCardView).ToList();
+    }
+
+    public async Task AddNotification(Notification notification)
+    {
+        await _repo.InsertIntoListAsync(u => u.Id == ObjectId.Parse(notification.RecipientId),
+        u => u.Notifications, notification);
+
+        await _socketService.NotifyUser(notification);
+    }
+    public async Task RemoveNotification(string id)
+    {
+        await _repo.RemoveFromListAsync(Builders<User>.Filter.ElemMatch(
+            u => u.Notifications, n=>n.Id==ObjectId.Parse(id)), u => u.Notifications, n => n.Id == ObjectId.Parse(id));
     }
 }

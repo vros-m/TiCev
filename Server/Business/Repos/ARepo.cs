@@ -129,6 +129,11 @@ public abstract class ARepo<T>(IMongoClient client,string collectionName)
         return (await _collection.FindAsync(filter)).FirstOrDefault();
     }
 
+        public virtual async Task<T?> GetFirstByFieldAsync(FilterDefinition<T> filter)
+    {
+        return (await _collection.FindAsync(filter)).FirstOrDefault();
+    }
+
     public virtual async Task<List<T>> GetAllByFieldAsync(Expression<Func<T, bool>> filter)
     {
         return await _collection.Find(filter).ToListAsync();

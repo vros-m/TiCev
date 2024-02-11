@@ -15,7 +15,8 @@ public static class DTOManager
             Description = dto.Description,
             VideoId = fileId.ToString(),
             ThumbnailId = thumbnailId?.ToString() ?? "",
-            ChannelName=dto.ChannelName
+            ChannelName=dto.ChannelName,
+            Tags=dto.Tags
         };
     }
 
@@ -27,7 +28,7 @@ public static class DTOManager
     public static SimpleUser SimplifyUser(User user)
     {
         return new SimpleUser(user.ObjectId,
-            user.Username);
+            user.Username,user.Notifications);
          
     }
 
@@ -35,7 +36,8 @@ public static class DTOManager
     {
         var rating = video.Ratings.Find(r => r.Item1 == userId)?.Item2 ?? 0.0;
         return new VideoView(video.ChannelId, video.Title, video.Views, video.Rating, rating, video.ChannelName,
-        video.ObjectId, video.VideoId, sub != null, video.Description, video.Tags);
+        video.ObjectId, video.VideoId, sub != null, video.Description, video.Tags,video.Comments.Select(
+            item=>FromCommentToView(item,userId)).ToList());
     }
 
     public static UserView FromDTOToUserView(UserViewDTO dto,string currentUserId)
@@ -44,4 +46,32 @@ public static class DTOManager
         , dto.Subscriptions, dto.Playlists, dto.Id.ToString(),dto.Subscribers.Contains(currentUserId));
     }
 
+    public static CommentView FromCommentToView(Comment comment,string userId)
+    {
+        var IsLiked = comment.Likes.Find(id => id == userId)!=null;
+        return new CommentView(comment.Id.Timestamp, comment.ObjectId, comment.ReplyingToId,
+        comment.VideoId, comment.Likes.Count, IsLiked, comment.Text, comment.UserId, comment.Username, comment.ProfilePicture);
+    }
+
+    public static Notification FromVideoToNotification(Video vid, string userId)
+    {
+        return new Notification
+        {
+            Message=$"{vid.ChannelName} has posted a new video: \"{vid.Title}\"",
+            SenderId=vid.ChannelId,
+            RecipientId=userId,
+            VideoId=vid.ObjectId,
+        };
+    }
+
+    public static Notification FromCommentToNotification(Comment comment)
+    {
+        return new Notification
+        {
+            Message = $"New comment under your video: \"{comment.Text}\"",
+            SenderId=comment.UserId,
+            RecipientId=comment.VideoPosterId,
+            VideoId=comment.VideoId
+        };
+    }
 }

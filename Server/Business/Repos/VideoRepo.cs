@@ -12,6 +12,43 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
 {
     private readonly GridFSBucket _bucket = new(client.GetDatabase(Constants.ConstObj.DatabaseName));
 
+
+    public async override Task<Video?> GetByIdAsync(string id)
+    {
+        BsonDocument[] pipeline = [
+            new("$match",new BsonDocument("_id",ObjectId.Parse(id))),
+            new("$unwind",new BsonDocument{
+                {"path","$Comments"},
+                {"preserveNullAndEmptyArrays",true} }),
+            new("$lookup",new BsonDocument{
+                {"from","users"},
+                {"localField","Comments.UserId"},
+                {"foreignField","_id"},
+                {"as","User"}
+            }),
+             new("$unwind",new BsonDocument{
+                {"path","$User"},
+                {"preserveNullAndEmptyArrays",true} }),
+            new("$addFields",new BsonDocument{
+               {"Comments.Username","$User.Username"},
+               {"Comments.ProfilePicture","$User.ProfilePicture"}
+            }),
+            new("$sort",new BsonDocument("Comments._id",-1)),
+            new("$group",new BsonDocument{
+                {"_id","$_id"},
+                {"OriginalFields",new BsonDocument("$first","$$ROOT")},
+                {"Comments",new BsonDocument("$push","$Comments")}
+            }),
+            new("$addFields",new BsonDocument("OriginalFields.Comments","$Comments")),
+            new("$replaceRoot",new BsonDocument("newRoot","$OriginalFields")),
+            new("$project",new BsonDocument{
+                {"User",0}
+            })
+        ];
+        var vid = (await _collection.AggregateAsync<Video>(pipeline)).First();
+        vid.Comments = vid.Comments.Where(c => c.Text != null).ToList();
+        return vid;
+    }
     public async Task<Video> UploadVideoAsync(VideoDTO dto)
     {
         using var stream = dto.Files[0].OpenReadStream();
@@ -119,10 +156,9 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
             new("$replaceRoot",new BsonDocument("newRoot","$JoinedTags")),
             new("$group",new BsonDocument{
                 {"_id","$VideoId"},
-                {"Tags",new BsonDocument("$addToSet","TagName")},
+                {"Tags",new BsonDocument("$addToSet","$TagName")},
                 {"TagCount",new BsonDocument("$sum",1)}
             }),
-            new("$match",new BsonDocument("_id",new BsonDocument("$not",new BsonDocument("$eq",ObjectId.Parse(id))))),
             new("$lookup",new BsonDocument{
                 {"from","videos"},
                 { "localField", "_id"},
@@ -130,8 +166,47 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
                 {"as", "Videos"}
             }),new("$unwind","$Videos"),
             new("$sort",new BsonDocument("TagCount",-1)),
-            new("$replaceRoot",new BsonDocument("newRoot","$Videos"))
+            new("$replaceRoot",new BsonDocument("newRoot","$Videos")),
+            new("$match",new BsonDocument("_id",new BsonDocument("$not",new BsonDocument("$eq",ObjectId.Parse(id))))),
         ];
         return (await _collection.AggregateAsync<Video>(pipeline)).ToList();
     }
+
+    public async Task<Comment> AddComment(Comment comment)
+    {
+        await InsertIntoListAsync(v => v.Id == ObjectId.Parse(comment.VideoId), v => v.Comments,
+            comment);
+        return comment;
+        /* using var session = await client.StartSessionAsync();   
+        session.StartTransaction();
+
+        try
+        {
+            // Step 1: Insert a comment into the comments array
+            await InsertIntoListAsync(v => v.Id == ObjectId.Parse(comment.VideoId), v => v.Comments,
+            comment);
+
+            // Step 2: Update the comment document with localId equal to the element count
+            var localIdUpdate = Builders<Video>.Update.Set("Comments.$.LocalId",
+                new BsonDocument("$size", "$Comments"));
+
+            var localIdUpdateResult = await _collection.UpdateOneAsync(session,
+                Builders<Video>.Filter.And(
+                    Builders<Video>.Filter.Eq("_id", ObjectId.Parse(comment.VideoId)),
+                    Builders<Video>.Filter.Eq("Comments._id", comment.Id)),
+                localIdUpdate);
+
+            await session.CommitTransactionAsync();
+            return comment;
+        }
+        catch (Exception)
+        {
+            await session.AbortTransactionAsync();
+            throw;
+        }  */         
+    }
+
+
+
 }
+       

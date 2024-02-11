@@ -16,9 +16,10 @@ public class User :MongoEntity
     public List<Subscription> Subscriptions { get; set; } = [];
     public List<string> Subscribers { get; set; } = [];
     public List<Playlist> Playlists { get; set; } = [];
+    public List<Notification> Notifications { get; set; } = [];
 }
 
-public record class SimpleUser(string Id,string Username);
+public record class SimpleUser(string Id,string Username,List<Notification> Notifications,string UserPhoto="");
 public record class UserViewDTO(string Username,string Email,string Bio,DateTime Birthday,string Gender,List<Video> Videos,
 List<Subscription> Subscriptions,List<string> Subscribers, List<Playlist> Playlists,ObjectId Id);
 

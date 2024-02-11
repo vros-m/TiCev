@@ -12,6 +12,7 @@ public class Video :MongoEntity
     public int Views { get; set; } = 0;
     public List<Tuple<string,double>> Ratings { get; set; } = [];
     public double Rating { get; set; } = 0;
+    public List<Comment> Comments { get; set; } = [];
 }
 
 public class VideoDTO
@@ -29,4 +30,4 @@ public record class VideoCardView(string ChannelId,string Title,int Views,double
 
 public record class VideoView(string ChannelId,string Title, int Views,
  double Rating, double MyRating, string ChannelName,
-string Id,string VideoId,bool IsSubscribed,string Description,List<string>Tags);
+string Id,string VideoId,bool IsSubscribed,string Description,List<string>Tags,List<CommentView> Comments);

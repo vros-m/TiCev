@@ -1,13 +1,11 @@
-using TiCev.Server.Settings;
 using TiCev.Server.Error;
 using TiCev.Server.Business.Services;
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using TiCev.Server.Business.Repos;
 using MongoDB.Bson;
 using TiCev.Server.Data.Entities;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
+using System.Net.WebSockets;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +28,8 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
     string ConnectionString = "mongodb://localhost:27017";
     return new MongoClient(ConnectionString);
 });
+
+builder.Services.AddSingleton<SocketService, SocketService>();
 
 builder.Services.AddScoped<VideoRepo, VideoRepo>();
 builder.Services.AddScoped<VideoService, VideoService>();
@@ -59,6 +59,28 @@ var tagCollection = mongoDatabase.GetCollection<TiCev.Server.Data.Entities.Tag>(
 tagCollection.Indexes.CreateMany([new CreateIndexModel<TiCev.Server.Data.Entities.Tag>(
     Builders<TiCev.Server.Data.Entities.Tag>.IndexKeys.Text(t=>t.TagName)
 )]);
+
+app.UseWebSockets();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/SocketService") // Or whatever path you want to handle WebSocket requests
+    {
+        if (context.WebSockets.IsWebSocketRequest)
+        {
+            var webSocketService = context.RequestServices.GetRequiredService<SocketService>();
+            await webSocketService.HandleConnection(context);
+        }
+        else
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        }
+    }
+    else
+    {
+        await next();
+    }
+});
 app.UseMiddleware<DefaultErrorHandler>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
