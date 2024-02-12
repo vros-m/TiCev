@@ -60,7 +60,7 @@ public class VideoController(VideoService service) : ControllerBase
         return File(file.Item1, file.Item2);
     }
 
-    [HttpPut("IncrementViews")]
+    [HttpPut("IncrementViews/{id}")]
     public async Task<IActionResult> IncrementViews(string id)
     {
         await _service.IncrementViews(id);
@@ -70,8 +70,8 @@ public class VideoController(VideoService service) : ControllerBase
     [HttpPut("RateVideo/{videoId}/{userId}/{rating}")]
     public async Task<IActionResult> RateVideo(string videoId,string userId,double rating)
     {
-       await _service.RateVideo(videoId, userId, rating);
-        return Ok();
+       double newRating =await _service.RateVideo(videoId, userId, rating);
+        return Ok(newRating);
     }
 
     [HttpGet("SearchForVideo/{query}")]
@@ -96,7 +96,7 @@ public class VideoController(VideoService service) : ControllerBase
     public async Task<IActionResult> AddComment(Comment comment)
     {
         await _service.AddComment(comment);
-        return Ok();
+        return Ok(comment);
     }
 
     [HttpDelete("DeleteComment")]

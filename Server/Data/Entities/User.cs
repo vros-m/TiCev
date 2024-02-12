@@ -21,8 +21,11 @@ public class User :MongoEntity
 
 public record class SimpleUser(string Id,string Username,List<Notification> Notifications,string UserPhoto="");
 public record class UserViewDTO(string Username,string Email,string Bio,DateTime Birthday,string Gender,List<Video> Videos,
-List<Subscription> Subscriptions,List<string> Subscribers, List<Playlist> Playlists,ObjectId Id);
+List<Subscription> Subscriptions,List<string> Subscribers, List<Playlist> Playlists,ObjectId Id,List<Notification> Notifications);
 
 public record class UserView(string Username,string Email,string Bio,DateTime Birthday,string Gender,List<VideoCardView> Videos,
-List<Subscription> Subscriptions, List<Playlist> Playlists,string Id,bool IsSubscribed);
+List<Subscription> Subscriptions, List<Playlist> Playlists,string Id,bool IsSubscribed,List<Notification> Notifications,int Subscribers);
+
+public record class UserDTO(string Username,string Password,string Email,DateTime Birthday,string Gender,string Bio,
+string ProfilePicture);
 

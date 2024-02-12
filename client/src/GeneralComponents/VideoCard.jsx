@@ -9,12 +9,13 @@ import {
   Grid
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { profilePicture, thumbnail } from '../Constants';
 
 export default function VideoCard({props}) {
   const navigate = useNavigate()
   function handleClick()
   {
-    navigate('/player/videoId')
+    navigate('/player/'+props.id)
   }
   return (
     <Grid item xs={12} sm={6} md={4}>
@@ -30,23 +31,23 @@ export default function VideoCard({props}) {
           <CardMedia
             component="img"
             height="200"
-            image="https://via.placeholder.com/345x200"
+            image={/* "https://via.placeholder.com/345x200" */thumbnail(props.thumbnailId)}
             alt="Video Thumbnail"
           />
           <CardContent sx={{height:'100px',padding:'5px',paddingLeft:'20px'}}>
             <Typography variant="h6" component="div" >
-              Video Title
+              {props.title}
             </Typography>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Avatar
-                src="https://via.placeholder.com/30x30"
+                src={/* "https://via.placeholder.com/30x30" */ profilePicture(props.channelId)}
                 alt="User Avatar"
                 sx={{ width: 30, height: 30, marginRight: 1 }}
               />
-              <Typography variant="subtitle2">Username</Typography>
+              <Typography variant="subtitle2">{props.channelName}</Typography>
             </div>
             <Typography variant="subtitle2" color="textSecondary" sx={{marginLeft:'20px'}}>
-              1.5k views
+              {props.views} {props.views != 1 ? 'views' : 'view'}
             </Typography>
           </CardContent>
         </CardActionArea>

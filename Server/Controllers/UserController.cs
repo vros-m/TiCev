@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using TiCev.Server.Business.Services;
+using TiCev.Server.Data;
 using TiCev.Server.Data.Entities;
 
 namespace TiCev.Server.Controllers;
@@ -19,9 +20,9 @@ public class UserController(UserService service):ControllerBase
     }
 
     [HttpPost("RegisterUser")]
-    public async Task<IActionResult> RegisterUser([FromBody]User user)
+    public async Task<IActionResult> RegisterUser([FromBody]UserDTO user)
     {
-        return Ok((await _service.AddAsync(user)).ObjectId);
+        return Ok((await _service.AddAsync(DTOManager.FromDTOToUser(user))).ObjectId);
     }
 
     [HttpGet("Login/{username}/{password}")]

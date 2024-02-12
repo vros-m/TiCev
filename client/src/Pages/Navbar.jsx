@@ -7,50 +7,59 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchBar from "../GeneralComponents/Searchbar";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import UserContext from "./Contexts/UserContext";
 
 
 export default function Navbar()
 {
-    const navigate = useNavigate()
-    useEffect(() =>
-    {
-        if (false)
-        {
-            navigate('/login')
-        }
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [userState,setUserState] = useContext(UserContext)
+  
 
-    }, [])
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const notificationsRef = useRef(null)
-    return <div id="root" >
-            <div className="d-flex flex-row justify-content-between" style={{
-        height: "100px",
-        backgroundColor: "white",
-            color: "black",
-            position: 'fixed',
-            top: '0px',
-            padding: '10px',
-            paddingLeft: '30px',
-            zIndex: '1000',
-            paddingRight: '20px',
-                width:'100%'
-        }}>
-            <Link style={{ color: 'black', fontSize: "2.5rem" }} to="/">TiCev</Link>
-            <SearchBar onSearch={() =>{}} width={'500px'}/>
-            <div className="d-flex flex-row align-items-center">
-                <Button ref={notificationsRef}
-                    sx={{ color: 'black' }}
-                    onClick={(ev)=>setDialogOpen((oldValue=>!oldValue))}
-                ><NotificationsNoneIcon sx={{ width: '35px', height: '35px' }} /></Button>
-                <NotificationDialog isOpen={dialogOpen} onClose={ev =>setDialogOpen(false)} anchorEl={notificationsRef}/>
-          <Button sx={{ color: 'black' }}><AccountBoxIcon sx={{ width: '35px', height: '35px' }}
-            onClick={ev => navigate('profile')} /></Button>
-                <Button sx={{color:'black'}}><LogoutIcon sx={{width:'35px',height:'35px'} }/></Button>
-            </div>
-        </div>
-        <Outlet/>
-    </div>
+
+  function logout()
+  {
+    setUserState(null)
+  }
+  const notificationsRef = useRef(null)
+  const navigate = useNavigate()
+  useEffect(() =>
+  {
+    if (userState == null) {
+      navigate('/login')
+    }
+
+  }, [userState])
+
+  return <div id="root" >
+          <div className="d-flex flex-row justify-content-between" style={{
+      height: "100px",
+      backgroundColor: "white",
+          color: "black",
+          position: 'fixed',
+          top: '0px',
+          padding: '10px',
+          paddingLeft: '30px',
+          zIndex: '1000',
+          paddingRight: '20px',
+              width:'100%'
+      }}>
+          <Link style={{ color: 'black', fontSize: "2.5rem" }} to="/">TiCev</Link>
+          <SearchBar onSearch={() =>{}} width={'500px'}/>
+          <div className="d-flex flex-row align-items-center">
+              <Button ref={notificationsRef}
+                  sx={{ color: 'black' }}
+                  onClick={(ev)=>setDialogOpen((oldValue=>!oldValue))}
+              ><NotificationsNoneIcon sx={{ width: '35px', height: '35px' }} /></Button>
+              <NotificationDialog isOpen={dialogOpen} onClose={ev =>setDialogOpen(false)} anchorEl={notificationsRef}/>
+        <Button sx={{ color: 'black' }}><AccountBoxIcon sx={{ width: '35px', height: '35px' }}
+          onClick={ev => navigate('profile')} /></Button>
+              <Button sx={{color:'black'}} onClick={ev=>logout()}><LogoutIcon sx={{width:'35px',height:'35px'} }/></Button>
+          </div>
+      </div>
+      <Outlet/>
+  </div>
 
 }
 

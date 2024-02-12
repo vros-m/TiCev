@@ -26,7 +26,7 @@ public class VideoDTO
 
 }
 
-public record class VideoCardView(string ChannelId,string Title,int Views,double Rating, string ChannelName,string Id);
+public record class VideoCardView(string ChannelId,string Title,int Views,double Rating, string ChannelName,string Id,string ThumbnailId);
 
 public record class VideoView(string ChannelId,string Title, int Views,
  double Rating, double MyRating, string ChannelName,

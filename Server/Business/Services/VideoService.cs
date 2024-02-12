@@ -70,20 +70,20 @@ public class VideoService(VideoRepo repo,UserService userService,TagRepo tagRepo
         await _repo.UpdateOneAsync(v => v.Id == ObjectId.Parse(videoId), update);
     }
 
-    public async Task RateVideo(string videoId,string userId,double rating=0.0)
+    public async Task<double> RateVideo(string videoId,string userId,double rating=0.0)
     {
         if (Math.Abs(rating) > 5.0)
             throw new CustomException("Ratings can't exceed 5.");
         if(rating>0.0)
         {
-            await _repo.RemoveFromListAsync(v => v.Id == ObjectId.Parse(videoId), v => v.Ratings, r => r.Item1 == userId);
+            var oldRating = (await _repo.GetFieldAsync(v => v.Id == ObjectId.Parse(videoId), v => v.Ratings))
+            .Where(r=>r.Item1==userId).FirstOrDefault();
+            if(oldRating!=null)
+                await _repo.RemoveFromListAsync(v => v.Id == ObjectId.Parse(videoId),
+                v=>v.Ratings,oldRating);
             await _repo.InsertIntoListAsync(v=>v.Id==ObjectId.Parse(videoId),v=>v.Ratings,Tuple.Create(userId,rating));
         }
-        else
-        {
-            await _repo.RemoveFromListAsync(v => v.Id == ObjectId.Parse(videoId), v => v.Ratings, item => item.Item1 == userId);
-        }
-        await _repo.UpdateRatingAsync(videoId);
+        return await _repo.UpdateRatingAsync(videoId);
     }
 
     public async Task<GridFSDownloadStream> GetVideoAsync(string id)

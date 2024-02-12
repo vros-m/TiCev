@@ -7,7 +7,7 @@ public class Comment:NestedMongoEntity
 
     [BsonIgnore]
     public long Timestamp{ get{
-            return Id.Timestamp;
+            return (long)Id.Timestamp * 1000L;
     }}
     [BsonRepresentation(BsonType.ObjectId)]
     public string UserId { get; set; } = null!;

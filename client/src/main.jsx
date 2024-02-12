@@ -13,6 +13,9 @@ import VideoPlayer from './Pages/VideoPlayer';
 import { VideoLoader } from './Pages/VideoPlayer';
 import ProfilePage from './Pages/ProfilePage';
 import { ProfileLoader } from './Pages/ProfilePage';
+import UserContext from './Pages/Contexts/UserContext';
+import App from './App';
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -33,5 +36,7 @@ const router = createBrowserRouter([
   }
 ])
 ReactDOM.createRoot(document.getElementById('root')).render(
-<RouterProvider router={router}/>
+  <App>
+    <RouterProvider router={router}/>
+  </App>
 )

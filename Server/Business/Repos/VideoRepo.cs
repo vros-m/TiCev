@@ -117,7 +117,7 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
         return await _collection.FindOneAndUpdateAsync(v => v.Id == ObjectId.Parse(id), Builders<Video>.Update.Inc(v => v.Views,1));
     }
 
-    public async Task UpdateRatingAsync(string videoId)
+    public async Task<double> UpdateRatingAsync(string videoId)
     {
         var id = ObjectId.Parse(videoId);
         var pipeline = new List<IPipelineStageDefinition>
@@ -133,7 +133,9 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
         };
 
         var result = await _collection.AggregateAsync<BsonDocument>(pipeline);
-        await UpdateOneAsync(v => v.Id == id, Builders<Video>.Update.Set("Rating", result.First().GetValue("rating")));
+        double rating = result.First().GetValue("Rating").AsDouble;
+        await UpdateOneAsync(v => v.Id == id, Builders<Video>.Update.Set("Rating",rating));
+        return rating;
         
     }
 
@@ -205,7 +207,6 @@ public class VideoRepo(IMongoClient client/*,*/) :ARepo<Video>(client,"videos")
             throw;
         }  */         
     }
-
 
 
 }

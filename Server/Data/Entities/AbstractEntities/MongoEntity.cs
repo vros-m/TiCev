@@ -12,7 +12,7 @@ public abstract class MongoEntity
     public ObjectId Id { get; set; }
 
     [BsonIgnore]
-    [JsonPropertyName("Id")]
+    [JsonPropertyName("id")]
     public string ObjectId{ get {
             return Id.ToString();
     } }

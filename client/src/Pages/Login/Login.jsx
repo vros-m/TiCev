@@ -4,8 +4,9 @@ import Alert from '@mui/material/Alert'
 import './Login.css'
 import { Link, useNavigate } from 'react-router-dom';
 import { userController } from '../../Constants';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { loginUser } from './Signup.jsx';
+import UserContext from '../Contexts/UserContext.jsx';
 
 
 
@@ -17,17 +18,15 @@ function loginFailed(setLoginState)
         return !oldValue
     })
 }
-async function login(username, password,navigate,setLoginState)
+export async function login(username, password,navigate,setLoginState,setUserState)
 {
     try {
-        const response = await fetch(`${userController}/LogIn/${username}/${password}`,{
+        const response = await fetch(`${userController}/Login/${username}/${password}`,{
     })
         if (response.status === 200)
         {
-            const jsonResponse = await response.json() 
-            const user = jsonResponse.item1
-            user.sessionToken = jsonResponse.item2
-            loginUser(user,navigate)
+            const userState = await response.json() 
+            loginUser(userState,setUserState,navigate)
             
         }
         else
@@ -45,6 +44,7 @@ async function login(username, password,navigate,setLoginState)
 
 export default function Login() { 
 
+    const [userState,setUserState] = useContext(UserContext)
     const [loginFailedState,setLoginFailedState]=useState(false)
     const navigate = useNavigate()
     const [loginState,setLoginState] = useState({
@@ -84,7 +84,7 @@ export default function Login() {
         }}>{'Login' + " Failed"}</p>}
         <Button variant="text" sx={{
             width:"80px"
-        }} id='Button' onClick={(ev) =>login(loginState.username, loginState.password, navigate, setLoginFailedState)
+        }} id='Button' onClick={(ev) =>login(loginState.username, loginState.password, navigate, setLoginFailedState,setUserState)
         }>OK</Button>
         <Link to={'/signup'}>{'Don\'t have an account? Sign up here.'}</Link>
        

@@ -5,8 +5,9 @@ import Alert from '@mui/material/Alert'
 import './Login.css'
 import { Link, useNavigate } from 'react-router-dom';
 import { userController } from '../../Constants';
-import { CURRENT_USER } from '../../Constants';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { login } from './Login';
+import UserContext from '../Contexts/UserContext';
 
 function loginFailed(setLoginState,msg)
 {
@@ -21,40 +22,28 @@ function loginFailed(setLoginState,msg)
     })
 }
 
-export function loginUser(signUpState,navigate)
+export function loginUser(userState,setUserState,navigate)
 {
-    localStorage.setItem(CURRENT_USER,JSON.stringify(signUpState))
-    navigate('/home')
+    setUserState(userState)
+    navigate('/')
 }
 
-async function signup(signUpState,navigate,setLoginState)
+async function signup(signUpState,navigate,setLoginState,setUserState)
 {
-    const response = await fetch(userController + '/AddUser', {
+    const response = await fetch(userController + '/RegisterUser', {
         method:'POST',
         headers: {
             "Content-Type":"application/json"
         },
-        body: JSON.stringify(signUpState)
+        body: JSON.stringify({
+            ...signUpState,
+            birthday:new Date(signUpState.birthday).toISOString()
+        })
     })
 
     if (response.status === 200)
     {
-        const userId = await response.text()
-        const response2 = await fetch(userController + `/LogIn/${signUpState.username}/${signUpState.password}`,
-            {
-        })
-        if (response2.ok)
-        {
-            const jsonResponse = await response2.json() 
-            const user = jsonResponse.item1
-            user.sessionToken = jsonResponse.item2
-            loginUser(user,navigate)
-        }
-        else
-        {
-            loginFailed(setLoginState,await response.text())
-            }
-
+        login(signUpState.username,signUpState.password,navigate,setLoginState,setUserState)
     }
     else
     {
@@ -67,8 +56,9 @@ export default function Signup() {
     const [signupFailedState, setSignupFailedState] = useState({flag:false,msg:''})
     const navigate = useNavigate()
     const [signupState,setSignupState] = useState({
-        username:"",password:"",email:"",bio:"",thumbnail:"",name:"",age:0,gender:'male'
+        username:"",password:"",email:"",bio:"",profilePicture:"",name:"",birthday:"",gender:'male'
     })
+    const [userState,setUserState] = useContext(UserContext)
 
     function onChange(event)
     {
@@ -78,6 +68,7 @@ export default function Signup() {
                 ...oldValue,
                 [event.target.name]:event.target.value
             }
+
         })
     }
 
@@ -89,11 +80,17 @@ export default function Signup() {
         fileReader.readAsDataURL(file)
         fileReader.onload=(ev) =>
         {
+            const size =new TextEncoder().encode(fileReader.result).length
+            if (size >= 15 * 1024 * 1024)
+            {
+                alert("Image too large!")
+                return
+            }
             alert("Image uploaded.")
             setSignupState(oldValue => {
                 return {
                     ...oldValue,
-                    thumbnail: fileReader.result
+                    profilePicture: fileReader.result
                 }
             })
         }
@@ -138,16 +135,18 @@ export default function Signup() {
             name='bio'
             onChange={(onChange)} />
         <TextField
-            id='Age'
-          label="Age"
+            id='Birthday'
+          label="Birthday"
           variant="outlined"
-            type="number"
-            name='age'
-          value={signupState.age}
+            type="date"
+            name='birthday'
+          value={signupState.birthday}
             onChange={(onChange)}
             sx={{
-                marginBottom:"10px"
+                marginBottom: "10px",
+                width:'224px'
             }}
+            InputLabelProps={{shrink:true}}
         />
          <FormControl component="fieldset" margin="normal" fullWidth sx={{width:'220px'}}>
           <FormLabel component="legend">Gender</FormLabel>
@@ -169,7 +168,7 @@ export default function Signup() {
             width:"80px"
         }} id='Button' onClick={(ev) =>
         {
-            signup(signupState, navigate, setSignupFailedState)
+            signup(signupState, navigate, setSignupFailedState,setUserState)
         }}>OK</Button>
         <Link to='/login'>Already have an account? Log in.</Link>
        
