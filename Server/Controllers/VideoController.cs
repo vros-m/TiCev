@@ -81,7 +81,7 @@ public class VideoController(VideoService service) : ControllerBase
     }
 
     [HttpGet("GetVideos")]
-    public async Task<IActionResult> GetVideos(int skip=0,int limit=20)
+    public async Task<IActionResult> GetVideos(int skip=0,int limit=24)
     {
         return Ok(await _service.GetAllAsync(skip,limit));
     }
@@ -99,7 +99,7 @@ public class VideoController(VideoService service) : ControllerBase
         return Ok(comment);
     }
 
-    [HttpDelete("DeleteComment")]
+    [HttpDelete("DeleteComment/{id}")]
     public async Task<IActionResult> DeleteComment(string id)
     {
         await _service.DeleteComment(id);
@@ -112,5 +112,7 @@ public class VideoController(VideoService service) : ControllerBase
         await _service.LikeComment(userId,commentId,direction);
         return Ok();
     }
+
+
 
 }

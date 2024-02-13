@@ -15,7 +15,7 @@ public class Notification:NestedMongoEntity
     public string RecipientId { get; set; } = null!; 
 
     [BsonIgnore]
-    public int Timestamp{ get{
-            return Id.Timestamp;
+    public long Timestamp{ get{
+            return Id.Timestamp*1000L;
     }}
 }

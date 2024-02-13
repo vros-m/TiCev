@@ -64,7 +64,7 @@ app.UseWebSockets();
 
 app.Use(async (context, next) =>
 {
-    if (context.Request.Path == "/SocketService") // Or whatever path you want to handle WebSocket requests
+    if (context.Request.Path=="/SocketService") // Or whatever path you want to handle WebSocket requests
     {
         if (context.WebSockets.IsWebSocketRequest)
         {

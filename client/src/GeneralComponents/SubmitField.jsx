@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
-const SubmitField = ({ onSubmit,icon,label,width }) => {
+const SubmitField = ({ onSubmit,icon,label,width,transformation='' }) => {
   const handleSubmit = (e) => {
-        onSubmit(state);
+        onSubmit(transformation+state);
     };
     function handleChange(ev)
     {

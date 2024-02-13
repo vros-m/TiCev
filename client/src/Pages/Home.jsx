@@ -9,14 +9,25 @@ import { videoController } from '../Constants';
 
 export async function HomeLoader({params})
 {
-  const response = await fetch(videoController + '/GetVideos?skip=0&limit=20')
-  if (response.ok)
+  if (!params.query)
   {
-    const array = await response.json();
+    const response = await fetch(videoController + '/GetVideos')
+    if (response.ok)
+    {
+      const array = await response.json();
+      return array
+    }
+    const array = /* new Array(33).fill(1) */[]
     return array
   }
-  const array = /* new Array(33).fill(1) */[]
-  return array
+  const request = await fetch(videoController + '/SearchForVideo/' + params.query)
+  if (request.ok)
+  {
+      const response = await request.json()
+      return response
+  }
+  else throw new Error("Search failed.")
+
 }
 
 export default function Home() {

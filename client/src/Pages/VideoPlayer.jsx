@@ -1,12 +1,14 @@
 import React, { useState,useEffect, useContext } from 'react';
 import {
   Container, IconButton, Typography, Paper, Button, Rating, Avatar, TextField, Card, CardContent, CardHeader, Divider,
-  Box, IconButton as MuiIconButton,Grid,CardMedia, CardActionArea
+  Box, IconButton as MuiIconButton,Grid,CardMedia, CardActionArea,Dialog,DialogTitle,DialogContent
 } from '@mui/material';
-import { Save, ThumbUpAlt } from '@mui/icons-material';
+import { Save, ThumbUpAlt, DeleteOutline as DeleteIcon } from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
 import {useLoaderData,Link, useNavigate} from 'react-router-dom'
 import { CURRENT_USER, formatRelativeTime, profilePicture, thumbnail, thumbnailByVideoId, userController, videoContent, videoController } from '../Constants';
 import UserContext from './Contexts/UserContext';
+
 
 function VideoPlayer() {
 
@@ -83,6 +85,7 @@ function VideoPlayer() {
             comments:[commentItem,...oldValue.comments]
           }
         })
+        setNewComment('')
       }
     }
   }
@@ -113,10 +116,12 @@ function VideoPlayer() {
   };
 
   const navigate = useNavigate()
+  const [playlistDialogOpen,setPlaylistDialog] = useState(false)
   return (
     <div className='d-flex flex-row justify-content-start w-100' style={{
       marginTop:'120px'
     }}>
+      <AddToPlaylistDialog open={playlistDialogOpen} onClose={ev=>setPlaylistDialog(false)} videoId={video.id}/>
       <Container sx={{marginRight:'0px'}} >    
             <Paper elevation={3} sx={{ padding: 2 }} height={'500px'} position={'relative'}>
               <Typography variant="h5" gutterBottom>
@@ -126,7 +131,8 @@ function VideoPlayer() {
             <video style={{
               width: '100%', height:'500px'
           }}
-                      controls={true}
+              controls
+              autoPlay
             width="100%"
               src={videoContent(video.videoId)}
               onLoadedMetadata={handleLoadedMetadata} >
@@ -138,12 +144,12 @@ function VideoPlayer() {
           
             <Link to={`/profile/${video.channelId}`}><Typography>{video.channelName}</Typography>
             </Link>
-                    <Button variant="outlined" sx={{ marginLeft: '20px' }} onClick={handleSubscribe}>
-                    {uiState.isSubscribed?'Unsubscribe':'Subscribe' }
-                      </Button>
+            {video.channelId!=userState.id&&<Button variant="outlined" sx={{ marginLeft: '20px' }} onClick={handleSubscribe}>
+              {uiState.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+            </Button>}
                   <Rating name="video-rating" value={uiState.myRating} onChange={ev=>handleRatingChange(ev.target.value)}
                                   sx={{marginLeft:'auto'}} />
-                <IconButton>
+                <IconButton onClick={ev=>setPlaylistDialog(true)}>
                   <Save />
                 </IconButton>
                 
@@ -186,19 +192,19 @@ function VideoPlayer() {
             Comment
           </Button>
           {uiState.comments.map((comment) => (
-            <CommentCard key={comment.id} comment={comment} />
+            <CommentCard key={comment.id} comment={comment} setUiState={setUiState}/>
           ))}
         </Paper>
       </Container>
       <div className='d-flex flex-column' style={{marginRight:'auto',width:'350px'}}>
-      {playlist&&<PlaylistCard playlist={playlist} navigate={navigate}/>}
+      {playlist&&<PlaylistCard playlist={playlist} currentVideoId={video.id}/>}
       <Grid item md={6} sx={{marginTop:'32px'}}>
         <Typography variant="h5" gutterBottom>
           Recommended Videos
         </Typography>
         {/* Map through recommended videos and render RecommendedVideoCard for each */}
         {recommendedVideos.map((video, index) => (
-          <RecommendedVideoCard key={index} video={video} navigate={navigate}/>
+          <RecommendedVideoCard key={index} video={video}/>
         ))}
       </Grid>
       </div>
@@ -207,14 +213,33 @@ function VideoPlayer() {
   );
 }
 
-function CommentCard({ comment}) {
+function CommentCard({ comment,setUiState }) {
+  
+  const [userState, setUserState] = useContext(UserContext)
+  async function deleteComment(ev)
+  {
+    const request = await fetch(videoController + '/DeleteComment/' + comment.id,
+      {
+      method:'DELETE'
+    })
+    if (request.ok)
+    {
+      setUiState(oldValue =>
+      {
+        return {
+          ...oldValue,
+          comments:[...oldValue.comments.filter(c=>c.id!=comment.id)]
+        }
+        })
+      }
+  }
   return (
     <Card sx={{ marginTop: 2 }}>
       <CardHeader
         avatar={<Avatar src={comment.profilePicture } />}
         title={comment.username}
         subheader={formatRelativeTime(new Date(comment.timestamp))}
-        action={<IconButton><ThumbUpAlt /></IconButton>}
+        action={userState.id==comment.userId&&<IconButton onClick={deleteComment}><DeleteIcon/></IconButton>}
       />
       <CardContent>
         <Typography>{comment.text}</Typography>
@@ -224,13 +249,14 @@ function CommentCard({ comment}) {
   );
 }
 
-const RecommendedVideoCard = ({ video,selected,navigate}) => {
+const RecommendedVideoCard = ({ video, selected, playlistId }) => {
+  const navigate = useNavigate()
   return (
     <Card sx={{
       display: 'flex', width: '100%', marginBottom: '2px',
       boxShadow: 'none',filter:selected?'brightness(95%)':'none', cursor: 'pointer',
 
-    }} onClick={ev=>navigate('/player/'+video.id)}>
+    }} onClick={ev=>navigate(`/player/${video.id}${playlistId?`/${playlistId}`:''}`)}>
       <CardActionArea sx={{
         display: 'flex', width: '100%', 
         boxShadow: 'none',  cursor: 'pointer',
@@ -256,8 +282,8 @@ const RecommendedVideoCard = ({ video,selected,navigate}) => {
           display: 'flex', alignItems: 'start',
           flexDirection: 'column'
         }}>
-          <div style={{ marginRight: '8px' }}>{video.poster}</div>
-          <div>{video.views}</div>
+          <div style={{ marginRight: '8px' }}>{video.channelName}</div>
+            <div>{video.views} {video.views!=1?'views':'view' }</div>
         </Typography>
       </CardContent>
       </CardActionArea>
@@ -267,35 +293,153 @@ const RecommendedVideoCard = ({ video,selected,navigate}) => {
 };
 
 
-const PlaylistCard = ({ playlist,navigate}) => {
-  const {playlistName, playlistOwner, currentVideoIndex, totalVideos, videos }=playlist
+const PlaylistCard = ({ playlist,currentVideoId}) => {
+  const { title, channelName, channelId, videos,id } = playlist
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+
+  useEffect(() => {
+    setCurrentVideoIndex(  videos.findIndex(
+      video=>video.id==currentVideoId
+    ))
+  },[currentVideoId])
+
+
+  const totalVideos=videos.length
   return (
     <Card sx={{ maxHeight: '650px'}}>
       <CardContent sx={{display:'flex',flexDirection:'column',padding:'0px'}}>
         {/* Playlist Name */}
         <div className="px-3 my-2">
           <Typography variant="h5" gutterBottom>
-            {playlistName}
+            {title}
           </Typography>
           {/* Playlist Owner */}
-          <Typography variant="caption" color="textSecondary" gutterBottom>
-            {`By ${playlistOwner}`}
-          </Typography>
-          {/* Video Index / Total Videos */}
-          <Typography variant="caption" color="textSecondary">
-            {`Video ${currentVideoIndex} / ${totalVideos}`}
-          </Typography>
+          <div className='w-100 d-flex flex-row justify-content-between'>
+            <Typography variant="caption" color="textSecondary" gutterBottom>
+              {`By ${channelName}`}
+            </Typography>
+            {/* Video Index / Total Videos */}
+            <Typography variant="caption" color="textSecondary">
+              {`Video ${currentVideoIndex+1} / ${totalVideos}`}
+            </Typography>
+          </div>
         </div>
        
         {/* Videos List */}
         <div style={{ overflowY: 'scroll',maxHeight:'500px'}}>
           {/* Map through playlist videos and render them */}
           {videos.map((video, index) => (
-            <RecommendedVideoCard key={index} video={video} selected={index + 1 == currentVideoIndex} navigate={ navigate} />
+            <RecommendedVideoCard key={index} video={video} selected={video.id===currentVideoId} playlistId={id} />
           ))}
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+
+const AddToPlaylistDialog = ({ open, onClose,videoId }) => {
+  const [creatingPlaylist, setCreatingPlaylist] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [playlists, setPlaylists] = useState([])
+  const [userState, setUserState] = useContext(UserContext)
+  const myOnClose = () => {
+    setCreatingPlaylist(false)
+    onClose()
+  }
+  useEffect(() => {
+    fetch(userController + `/GetPlaylists/${userState.id}`).then(r =>
+    {
+      if (r.ok)
+      {
+        r.json().then(result=>setPlaylists(result))
+      }
+      else throw new Error("Can't fetch playlists.")
+      })
+  },[])
+  const handlePlaylistClick = async (playlistId,index) => {
+    const response = await fetch(userController + `/AddVideoToPlaylist/${playlistId}/${videoId}`,
+      {
+      method:'POST'
+    })
+    if (response.ok)
+    {
+      playlists[index].videoIds.push(videoId)
+      setPlaylists(oldValue=>[...oldValue])
+    }
+    else alert("error!")
+   
+    //myOnClose();
+  };
+
+  const handleCreatePlaylist = async () => {
+    // Add logic to handle creating a new playlist
+    const response = await fetch(userController + `/CreatePlaylist`, {
+      method: 'POST',
+      headers: {
+        "Content-Type":'application/json'
+      },
+      body: JSON.stringify(
+        {
+          title: newPlaylistName,
+          channelId: userState.id,
+          channelName: userState.username,
+          videoIds:[videoId]
+        }
+      )
+    })
+    if (response.ok)
+    {
+      const playlist = await response.json()
+      setPlaylists(oldValue => {
+        return [...oldValue,playlist]
+      })
+      myOnClose()
+    }
+    else (
+      alert("Error!")
+    )
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Add to Playlist</DialogTitle>
+      <DialogContent>
+        {!creatingPlaylist ? (
+          <>
+            {playlists.map((playlist,index) => (
+              <Card key={playlist.id} sx={{ marginBottom: 2 }}>
+                <CardContent style={{ display: 'flex', alignItems: 'center', justifyContent:'space-between'}}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent:'space-between'}}><img marginRight={16} width={50} height={50} src={playlist.videoIds.length!=0?thumbnailByVideoId(
+                    playlist.videoIds[0]):''} />
+                  <Typography style={{marginLeft:10}} variant="subtitle1">{playlist.title}</Typography></div>
+                  <IconButton
+                    edge="end"
+                    aria-label="add"
+                    onClick={() => handlePlaylistClick(playlist.id,index)}
+                    disabled={playlist.videoIds.filter(vId=>vId==videoId).length!=0}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </CardContent>
+              </Card>
+            ))}
+            <Button onClick={() => setCreatingPlaylist(true)}>Create Playlist</Button>
+          </>
+        ) : (
+          <>
+            <TextField
+              label="Playlist Name"
+              value={newPlaylistName}
+              onChange={(e) => setNewPlaylistName(e.target.value)}
+              fullWidth
+              sx={{ marginBottom: 2,marginTop:2 }}
+            />
+            <Button onClick={handleCreatePlaylist}>Add Playlist</Button>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -330,23 +474,6 @@ export async function VideoLoader({params})
   }
   else
     throw error('Error loading video.')
-  /* const recommendedVideos = new Array(20).fill({
-    title: 'Title', thumbnailUrl: "https://via.placeholder.com/345x200"
-    , poster: 'someDude', views: '50k'
-  })
-  const returnValue={recommendedVideos}
-  if (params.playlistId)
-  {
-    //fetchPlaylist
-    const playlist = {
-      playlistName: "name", playlistOwner: 'me', currentVideoIndex: 1, totalVideos: 20,
-      videos:recommendedVideos
-    }
-    returnValue['playlist']=playlist
-  }
-  else
-    returnValue['playlist']=null
-    return returnValue */
 }
 
 

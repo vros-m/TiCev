@@ -75,7 +75,14 @@ public class UserController(UserService service):ControllerBase
     public async Task<IActionResult> CreatePlaylist(Playlist playlist)
     {
         string id =await _service.CreatePlaylist(playlist);
-        return Ok(id);
+        return Ok(playlist);
+    }
+
+    [HttpGet("GetPlaylists/{id}")]
+    public async Task<IActionResult> GetPlaylists(string id)
+    {
+        var playlists =await _service.GetFieldAsync(u => u.Id == ObjectId.Parse(id), u => u.Playlists);
+        return Ok(playlists);
     }
 
     [HttpDelete("DeletePlaylist/{id}")]
@@ -108,5 +115,19 @@ public class UserController(UserService service):ControllerBase
     public async Task<IActionResult> GetFeed(string id,int skip=0)
     {
         return Ok(await _service.GetSubscriptionVideos(id, skip));
+    }
+
+    [HttpGet("GetNotifications/{id}")]
+    public async Task<IActionResult> GetNotifications(string id)
+    {
+        return Ok((await _service.GetFieldAsync(u => u.Id == ObjectId.Parse(id),
+        u => u.Notifications)).OrderByDescending(n=>n.Timestamp));
+    }
+
+    [HttpDelete("DeleteNotification/{id}")]
+    public async Task<IActionResult> DeleteNotification(string id)
+    {
+        await _service.RemoveNotification(id);
+        return Ok();
     }
 }

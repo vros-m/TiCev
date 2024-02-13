@@ -12,9 +12,10 @@ public abstract class ARepo<T>(IMongoClient client,string collectionName)
     protected IMongoCollection<T> _collection
     =client.GetDatabase(Constants.ConstObj.DatabaseName).GetCollection<T>(collectionName);
 
-    public virtual async Task<List<T>> GetAllAsync(int skip=0,int limit=0x7FFFFFFF)
+    public virtual async Task<List<T>> GetAllAsync(int skip=0,int limit=0x7FFFFFFF,SortDefinition<T>? sortDefinition=null)
     {
-        return await _collection.Find(item => true).Skip(skip).Limit(limit).ToListAsync();
+        sortDefinition ??= new BsonDocument("_id", -1);
+        return await _collection.Find(item => true).Sort(sortDefinition).Skip(skip).Limit(limit).ToListAsync();
     }
 
     public virtual async Task<T?> GetByIdAsync(string id)

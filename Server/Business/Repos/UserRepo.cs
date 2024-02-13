@@ -34,7 +34,7 @@ public class UserRepo(IMongoClient client):ARepo<User>(client,"users")
         return DTOManager.FromDTOToUserView(res,currentUserId);
     }
 
-    public async Task<List<Video>> GetPlaylistContent(string id)
+    public async Task<PlaylistViewDTO> GetPlaylistContent(string id)
     {
 
          var pipeline = new BsonDocument[]{
@@ -48,16 +48,33 @@ public class UserRepo(IMongoClient client):ARepo<User>(client,"users")
                 { "localField", "Playlists.VideoIds" },
                 { "foreignField", "_id" },
                 { "as", "Videos" }
-            }),  new BsonDocument("$unwind", "$Playlists.VideoIds"),
-            new BsonDocument("$project",new BsonDocument{
+            }), 
+        /*     new BsonDocument("$project",new BsonDocument{
             {"Videos",1},{"_id",0}
-            }),
+            }), */
             new BsonDocument("$unwind","$Videos"),
-            new BsonDocument("$replaceRoot",new BsonDocument("newRoot","$Videos")),
-        new BsonDocument("$sort", new BsonDocument("_id", -1)),
+            new BsonDocument("$sort",new BsonDocument("Videos.Title",1)),
+            new BsonDocument("$group",new BsonDocument{
+                {"_id","$Playlists._id"},
+                {"ChannelName",new BsonDocument("$first","$Username")},
+                {"ChannelId",new BsonDocument("$first","$_id")},
+                {"Playlist",new BsonDocument("$first","$Playlists")},
+                {"Videos",new BsonDocument("$push","$Videos")}
+            }),
+            new BsonDocument("$addFields",new BsonDocument{
+                {"Playlist.Videos","$Videos"},
+                {"Playlist.ChannelName","$ChannelName"},
+                {"Playlist.ChannelId","$ChannelId"}
+            }),
+            new BsonDocument("$replaceRoot",new BsonDocument("newRoot","$Playlist")),
+            new BsonDocument("$project",new BsonDocument{
+                {"VideoIds",0}
+            })
+/*             new BsonDocument("$replaceRoot",new BsonDocument("newRoot","$Videos")),
+        new BsonDocument("$sort", new BsonDocument("_id", -1)), */
         };
 
-        return (await _collection.AggregateAsync<Video>(pipeline)).ToList();
+        return (await _collection.AggregateAsync<PlaylistViewDTO>(pipeline)).First();
     }
     public async Task<List<Video>> GetSubscriptionVideos(string id,int skip)
     {

@@ -73,10 +73,10 @@ public class UserService(UserRepo repo,VideoRepo videoRepo,SocketService socketS
         u.Playlists,p=>p.Id==ObjectId.Parse(id)), u => u.Playlists, p => p.Id == ObjectId.Parse(id));
     }
 
-    public async Task<List<VideoCardView>> GetPlaylistContent(string id)
+    public async Task<PlaylistView> GetPlaylistContent(string id)
     {
-        var list =await _repo.GetPlaylistContent(id);
-        return list.Select(DTOManager.FromVideoToCardView).ToList();
+        var playlist =await _repo.GetPlaylistContent(id);
+        return DTOManager.FromDTOToPlaylistView(playlist);
     }
 
     public async Task AddVideoToPlaylist(string playlistId,string videoId)

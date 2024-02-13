@@ -89,4 +89,10 @@ public static class DTOManager
             ProfilePicture=user.ProfilePicture
         };
     }
+
+    public static PlaylistView FromDTOToPlaylistView(PlaylistViewDTO dto)
+    {
+        return new PlaylistView(dto.Id.ToString(),dto.Title,dto.ChannelId.ToString(),dto.ChannelName,
+        dto.Videos.Select(FromVideoToCardView).ToList());
+    }
 }

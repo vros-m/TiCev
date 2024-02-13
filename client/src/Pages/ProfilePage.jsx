@@ -7,11 +7,13 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import VideoCard from '../GeneralComponents/VideoCard'; 
 import { Card,CardMedia,CardContent,Container,Grid, CardActionArea } from '@mui/material';
-import { useLoaderData } from 'react-router-dom';
+import { useLoaderData, useNavigate } from 'react-router-dom';
 import { CURRENT_USER, parseAndFormatDate, profilePicture, thumbnailByVideoId, userController } from '../Constants';
 
 const ProfilePage = () => {
   const [tabValue, setTabValue] = useState(0);
+  const currentUserId = JSON.parse(localStorage.getItem(CURRENT_USER)).id
+  const navigate = useNavigate()
 
   const handleChangeTab = (event, newValue) => {
     setTabValue(newValue);
@@ -27,9 +29,10 @@ const ProfilePage = () => {
             <Typography variant="h1">{profile.username}</Typography>
             <Typography variant="caption">{profile.username} • {profile.subscribers.toString()} {profile.subscribers == 1 ? 'subscriber' :
             'subscribers' }</Typography>
-          <Button variant="outlined" style={{ marginTop: '10px' ,width:'200px'}}>
-            Customize Profile
-          </Button>
+            {currentUserId == profile.id && <Button variant="outlined" style={{ marginTop: '10px', width: '200px' }}
+            onClick={ev=>navigate('/customizeProfile')}>
+              Customize Profile
+            </Button>}
         </div>
       </div>
 
@@ -114,8 +117,17 @@ const TabPanel = ({ children, value, index }) => (
 );
 
 const PlaylistCard = ({ info }) => {
-  const { title, videoIds } = info;
+  const { title, videoIds,id } = info;
   const thumbnail = videoIds.length != 0 ? thumbnailByVideoId(videoIds[0]) : ''
+  const navigate = useNavigate()
+
+  function navigateToPlaylist()
+  {
+    if (videoIds.length != 0)
+    {
+      navigate(`/player/${videoIds[0]}/${id}`)
+      }
+  }
   return (
         <Grid item xs={12} sm={6} md={4}>
             <Card sx={{
@@ -124,7 +136,7 @@ const PlaylistCard = ({ info }) => {
                     transform: 'scale(1.05)',
                 }
             }}>
-            <CardActionArea>
+            <CardActionArea onClick={ev=>navigateToPlaylist()}>
         {/* Assuming 'thumbnail' is the path to the first video's thumbnail */}
         <CardMedia
           component="img"
